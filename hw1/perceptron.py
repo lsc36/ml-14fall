@@ -19,9 +19,9 @@ def train(data):
             if sgn(dot(vec, entry[:dimensions])) != entry[dimensions]:
                 mistake = True
                 vec = [w + entry[dimensions] * x for (w, x) in zip(vec, entry[:dimensions])]
-                break
-        if not mistake: break
-        updates = updates + 1
+                updates = updates + 1
+        if mistake: continue
+        break
     return (vec, updates)
 
 
