@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import random
+import sys
+
+
 def sgn(x):
     if x > 0: return 1.0
     return -1.0
@@ -32,11 +36,24 @@ def prob15():
     print("w = %s\nupdates = %d" % train(data))
 
 
+def prob16():
+    f = open('data/hw1_15_train.dat')
+    data = [[float(x) for x in ['1.0'] + line.split()] for line in f.readlines()]
+    f.close()
+    total_updates = 0
+    for i in range(2000):
+        data_shuf = data[:]
+        random.shuffle(data_shuf)
+        (vec, updates) = train(data_shuf)
+        total_updates = total_updates + updates
+    print("avg. updates = %f" % (float(total_updates) / 2000))
+
+
 def main():
     fmap = {
         '15': prob15,
+        '16': prob16,
     }
-    import sys
     try:
         fmap[sys.argv[1]]()
     except:
