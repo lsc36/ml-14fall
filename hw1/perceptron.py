@@ -29,17 +29,20 @@ def train(data, eta=1.0):
     return (vec, updates)
 
 
-def prob15():
-    f = open('data/hw1_15_train.dat')
+def read_data(filename):
+    f = open(filename)
     data = [[float(x) for x in ['1.0'] + line.split()] for line in f.readlines()]
     f.close()
+    return data
+
+
+def prob15():
+    data = read_data('data/hw1_15_train.dat')
     print("w = %s\nupdates = %d" % train(data))
 
 
 def prob1617(eta):
-    f = open('data/hw1_15_train.dat')
-    data = [[float(x) for x in ['1.0'] + line.split()] for line in f.readlines()]
-    f.close()
+    data = read_data('data/hw1_15_train.dat')
     total_updates = 0
     for i in range(2000):
         data_shuf = data[:]
