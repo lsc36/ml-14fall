@@ -115,7 +115,7 @@ def main():
     }
     try:
         fmap[sys.argv[1]]()
-    except KeyError:
+    except (KeyError, IndexError) as e:
         print("Usage: %s <prob_num>" % sys.argv[0])
 
 
