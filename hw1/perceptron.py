@@ -2,7 +2,7 @@
 
 import random
 import sys
-from multiprocessing import Process, Manager
+from multiprocessing import Pool
 
 
 def sgn(x):
@@ -73,33 +73,36 @@ def prob15():
     print("w = %s\nupdates = %d" % train(data))
 
 
+def prob1617_thread(args):
+    (data, eta) = args
+    data_shuf = data[:]
+    random.shuffle(data_shuf)
+    (vec, updates) = train(data_shuf, eta)
+    return updates
+
+
+num_threads = 8
+
+
 def prob1617(eta):
     data = read_data('data/hw1_15_train.dat')
-    total_updates = 0
-    for i in range(2000):
-        data_shuf = data[:]
-        random.shuffle(data_shuf)
-        (vec, updates) = train(data_shuf, eta)
-        total_updates = total_updates + updates
-    print("avg. updates = %f" % (float(total_updates) / 2000))
+    pool = Pool(num_threads)
+    updates_list = pool.map(prob1617_thread, [(data, eta)] * 2000)
+    print("avg. updates = %f" % (float(sum(updates_list)) / 2000))
 
 
-def prob18_thread(data, test_data, err_count_list, use_w_50, max_updates):
+def prob18_thread(args):
+    (data, test_data, use_w_50, max_updates) = args
     w_pocket = train_pocket(data, max_updates, use_w_50)[0]
-    err_count_list.append(count_error(w_pocket, test_data))
+    return count_error(w_pocket, test_data)
 
 
 def prob181920(use_w_50, max_updates):
     data = read_data('data/hw1_18_train.dat')
     test_data = read_data('data/hw1_18_test.dat')
-    num_threads = 20
-    err_count_list = Manager().list()
-    for i in range(2000 // num_threads):
-        print("%d/%d" % (i, 2000 // num_threads))
-        threads = [Process(target=prob18_thread, args=(data, test_data,
-            err_count_list, use_w_50, max_updates)) for i in range(num_threads)]
-        for t in threads: t.start()
-        for t in threads: t.join()
+    pool = Pool(num_threads)
+    err_count_list = pool.map(prob18_thread,
+        [(data, test_data, use_w_50, max_updates)] * 2000)
     print("error rate = %f" % (float(sum(err_count_list)) / 2000 /
         len(test_data)))
 
