@@ -42,7 +42,7 @@ def count_error(vec, data):
     return count
 
 
-def train_pocket(data, max_updates):
+def train_pocket(data, max_updates, use_w_50):
     dim = len(data[0]) - 1
     vec = [0.0] * dim
     updates = 0
@@ -57,6 +57,7 @@ def train_pocket(data, max_updates):
             if new_err_count < err_count:
                 w_pocket = vec
                 err_count = new_err_count
+    if use_w_50: return (vec, updates, err_count)
     return (w_pocket, updates, err_count)
 
 
@@ -83,12 +84,12 @@ def prob1617(eta):
     print("avg. updates = %f" % (float(total_updates) / 2000))
 
 
-def prob18_thread(data, test_data, err_count_list):
-    w_pocket = train_pocket(data, 50)[0]
+def prob18_thread(data, test_data, err_count_list, use_w_50):
+    w_pocket = train_pocket(data, 50, use_w_50)[0]
     err_count_list.append(count_error(w_pocket, test_data))
 
 
-def prob18():
+def prob1819(use_w_50):
     data = read_data('data/hw1_18_train.dat')
     test_data = read_data('data/hw1_18_test.dat')
     num_threads = 20
@@ -96,7 +97,7 @@ def prob18():
     for i in range(2000 // num_threads):
         print("%d/%d" % (i, 2000 // num_threads))
         threads = [Process(target=prob18_thread, args=(data, test_data,
-            err_count_list)) for i in range(num_threads)]
+            err_count_list, use_w_50)) for i in range(num_threads)]
         for t in threads: t.start()
         for t in threads: t.join()
     print("error rate = %f" % (float(sum(err_count_list)) / 2000 /
@@ -108,7 +109,8 @@ def main():
         '15': prob15,
         '16': lambda: prob1617(1.0),
         '17': lambda: prob1617(0.5),
-        '18': prob18,
+        '18': lambda: prob1819(False),
+        '19': lambda: prob1819(True),
     }
     try:
         fmap[sys.argv[1]]()
