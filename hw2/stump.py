@@ -16,12 +16,9 @@ def sgn_noise(x):
     return sgn(x)
 
 
-def prob1718_thread(arg):
-    dataset = [(x, sgn_noise(x)) for x in
-        [random.uniform(-1.0, 1.0) for i in range(20)]
-    ]
+def stump(dataset):
     dataset.sort()
-    err_min = 20
+    err_min = len(dataset)
     list_st = []
     for s in [1, -1]:
         for t in range(21):
@@ -37,7 +34,14 @@ def prob1718_thread(arg):
                 list_st = [(s, theta)]
             elif err_min == err:
                 list_st.append((s, theta))
-    return (err_min / 20, random.choice(list_st))
+    return (err_min, random.choice(list_st))
+
+
+def prob1718_thread(arg):
+    dataset = [(x, sgn_noise(x)) for x in
+        [random.uniform(-1.0, 1.0) for i in range(20)]
+    ]
+    return stump(dataset)
 
 
 def prob1718():
@@ -45,10 +49,10 @@ def prob1718():
     pool = Pool(n_threads)
     res_list = pool.map(prob1718_thread, range(5000))
     print("avg. E_in = %f"
-        % (sum([e_in for (e_in, (s, t)) in res_list]) / 5000))
+        % (sum([err / 20 for (err, (s, t)) in res_list]) / 5000))
     print("avg. E_out = %f"
         % (sum([0.5 + 0.3 * s * (abs(t) - 1)
-            for (e_in, (s, t)) in res_list]) / 5000))
+            for (err, (s, t)) in res_list]) / 5000))
 
 
 def main():
