@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from multiprocessing import Pool
+import random
 import numpy as np
 
 
@@ -23,13 +23,16 @@ def theta(s):
     return 1.0 / (1.0 + np.exp(-s))
 
 
-def logreg(X, y, eta, T, thres=1e-6):
+def logreg(X, y, eta, T, stoch, thres=1e-6):
     n = len(X)
     dim = len(X[0])
     w = np.array([0] * dim)
     for i in range(T):
-        grad = sum([theta(-y[i] * w.dot(X[i])) * (-y[i] * X[i])
-            for i in range(n)]) / n
+        if stoch:
+            grad = theta(-y[i%n] * w.dot(X[i%n])) * (-y[i%n] * X[i%n])
+        else:
+            grad = sum([theta(-y[i] * w.dot(X[i])) * (-y[i] * X[i])
+                for i in range(n)]) / n
         if abs(np.linalg.norm(grad)) < thres: break
         w = w - eta * grad
         if i % 100 == 0:
@@ -39,9 +42,9 @@ def logreg(X, y, eta, T, thres=1e-6):
     return w
 
 
-def prob1819(eta):
+def prob181920(eta, stoch=False):
     X, y = read_data('hw3_train.dat')
-    w = logreg(X, y, eta, 2000)
+    w = logreg(X, y, eta, 2000, stoch)
     X, y = read_data('hw3_test.dat')
     n = len(X)
     E_out = sum([sgn(w.dot(X[i])) != y[i] for i in range(n)]) / n
@@ -50,9 +53,9 @@ def prob1819(eta):
 
 def main():
     fmap = {
-        '18': lambda: prob1819(0.001),
-        '19': lambda: prob1819(0.01),
-        #'20': prob20,
+        '18': lambda: prob181920(0.001),
+        '19': lambda: prob181920(0.01),
+        '20': lambda: prob181920(0.001, True),
     }
     try:
         fmap[sys.argv[1]]()
