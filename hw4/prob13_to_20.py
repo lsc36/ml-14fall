@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+
+import sys
+import numpy as np
+from multiprocessing import Pool
+
+
+n_threads = 8
+
+
+def read_data(filename):
+    f = open(filename)
+    data = [[float(x) for x in line.split()] for line in f.readlines()]
+    f.close()
+    X = np.array([x[:-1] for x in data])
+    y = np.array([x[-1] for x in data])
+    return (X, y)
+
+
+d_train = read_data('hw4_train.dat')
+d_test = read_data('hw4_test.dat')
+
+
+def sgn(x):
+    if x > 0: return 1.0
+    return -1.0
+
+
+def reglinreg(dataset, l):
+    X, y = dataset
+    dim = len(X[0])
+    w_reg = np.linalg.inv(
+        X.transpose().dot(X) + l*np.identity(dim)
+        ).dot(X.transpose()).dot(y)
+    return w_reg
+
+
+def err(dataset, w):
+    X, y = dataset
+    n = len(X)
+    cnt = sum([sgn(X[i].dot(w)) != y[i] for i in range(n)])
+    return cnt / n
+
+
+def prob13():
+    w_reg = reglinreg(d_train, 10)
+    print("E_in = %f, E_out = %f" % (err(d_train, w_reg), err(d_test, w_reg)))
+
+
+def prob14_thread(l):
+    w_reg = reglinreg(d_train, l)
+    return (l, err(d_train, w_reg), err(d_test, w_reg))
+
+
+def prob1415(p):
+    pool = Pool(n_threads)
+    results = pool.map(prob14_thread, [10**x for x in range(-10, 3)])
+    if p == 14:  # sort by E_in
+        results.sort(key=lambda x: (x[1], -x[0]))
+    else:  # sort by E_out
+        results.sort(key=lambda x: (x[2], -x[0]))
+    for entry in results:
+        print("lambda = %E, E_in = %f, E_out = %f" % entry)
+
+
+def main():
+    fmap = {
+        '13': prob13,
+        '14': lambda: prob1415(14),
+        '15': lambda: prob1415(15),
+    }
+    try:
+        fmap[sys.argv[1]]()
+    except (KeyError, IndexError) as e:
+        print("Usage: %s <prob_num>" % sys.argv[0])
+
+
+if __name__ == '__main__':
+    main()
