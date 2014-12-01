@@ -19,6 +19,8 @@ def read_data(filename):
 
 d_train = read_data('hw4_train.dat')
 d_test = read_data('hw4_test.dat')
+d_train_s = (d_train[0][:120], d_train[1][:120])
+d_val = (d_train[0][-80:], d_train[1][-80:])
 
 
 def sgn(x):
@@ -63,11 +65,29 @@ def prob1415(p):
         print("lambda = %E, E_in = %f, E_out = %f" % entry)
 
 
+def prob16_thread(l):
+    w_reg = reglinreg(d_train_s, l)
+    return (l, err(d_train_s, w_reg), err(d_val, w_reg), err(d_test, w_reg))
+
+
+def prob1617(p):
+    pool = Pool(n_threads)
+    results = pool.map(prob16_thread, [10**x for x in range(-10, 3)])
+    if p == 16:  # sort by E_train
+        results.sort(key=lambda x: (x[1], -x[0]))
+    else:  # sort by E_val
+        results.sort(key=lambda x: (x[2], -x[0]))
+    for entry in results:
+        print("lambda = %E, E_train = %f, E_val = %f, E_out = %f" % entry)
+
+
 def main():
     fmap = {
         '13': prob13,
         '14': lambda: prob1415(14),
         '15': lambda: prob1415(15),
+        '16': lambda: prob1617(16),
+        '17': lambda: prob1617(17),
     }
     try:
         fmap[sys.argv[1]]()
