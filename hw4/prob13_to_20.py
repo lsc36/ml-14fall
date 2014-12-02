@@ -12,7 +12,7 @@ def read_data(filename):
     f = open(filename)
     data = [[float(x) for x in line.split()] for line in f.readlines()]
     f.close()
-    X = np.array([x[:-1] for x in data])
+    X = np.array([[1.0] + x[:-1] for x in data])
     y = np.array([x[-1] for x in data])
     return (X, y)
 
