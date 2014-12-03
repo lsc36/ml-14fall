@@ -81,6 +81,38 @@ def prob1617(p):
         print("lambda = %E, E_train = %f, E_val = %f, E_out = %f" % entry)
 
 
+def prob18():
+    # lambda = 1.0
+    w_reg = reglinreg(d_train, 1.0)
+    print("E_in = %f, E_out = %f" % (err(d_train, w_reg), err(d_test, w_reg)))
+
+
+def prob19_thread(l):
+    errsum = 0.0
+    for i in range(5):
+        w_reg = reglinreg((
+            np.vstack([d_train[0][:i*40], d_train[0][(i+1)*40:]]),
+            np.hstack([d_train[1][:i*40], d_train[1][(i+1)*40:]])
+            ), l)
+        errsum += err((d_train[0][i*40:(i+1)*40], d_train[1][i*40:(i+1)*40]),
+            w_reg)
+    return (l, errsum / 5)
+
+
+def prob19():
+    pool = Pool(n_threads)
+    results = pool.map(prob19_thread, [10**x for x in range(-10, 3)])
+    results.sort(key=lambda x: (x[1], -x[0]))
+    for entry in results:
+        print("lambda = %E, E_cv = %f" % entry)
+
+
+def prob20():
+    # lambda = 1e-8
+    w_reg = reglinreg(d_train, 1e-8)
+    print("E_in = %f, E_out = %f" % (err(d_train, w_reg), err(d_test, w_reg)))
+
+
 def main():
     fmap = {
         '13': prob13,
@@ -88,6 +120,9 @@ def main():
         '15': lambda: prob1415(15),
         '16': lambda: prob1617(16),
         '17': lambda: prob1617(17),
+        '18': prob18,
+        '19': prob19,
+        '20': prob20,
     }
     try:
         fmap[sys.argv[1]]()
