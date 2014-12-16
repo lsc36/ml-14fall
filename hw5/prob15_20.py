@@ -25,9 +25,19 @@ def prob15():
     print("|w| = %f" % np.linalg.norm(w))
 
 
+def prob16():
+    X = [row[1:] for row in d_train]
+    for k in [0.0, 2.0, 4.0, 6.0, 8.0]:
+        y = [1 if row[0] == k else 0 for row in d_train]
+        model = svm_train(y, X, '-s 0 -h 0 -c 0.01 -t 1 -d 2 -g 1 -r 1')
+        p_labels, p_acc, p_vals = svm_predict(y, X, model)
+        print("%d vs. not %d: E_in = %f%%" % (k, k, 100.0 - p_acc[0]))
+
+
 def main():
     fmap = {
         '15': prob15,
+        '16': prob16,
     }
     try:
         fmap[sys.argv[1]]()
