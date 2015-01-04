@@ -2,6 +2,7 @@
 
 import random
 from collections import Counter
+from multiprocessing import Pool
 
 
 def impurity(y):
@@ -64,6 +65,9 @@ class DecisionTree(object):
         else:
             return self.label
 
+    def err(self, X, y):
+        return sum([1 for x, yy in zip(X, y) if self.predict(x) != yy]) / len(X)
+
 
 def read_data(filename):
     with open(filename, 'r') as f:
@@ -72,15 +76,45 @@ def read_data(filename):
     return X, y
 
 
+X_train, y_train = read_data('hw6_train.dat')
+X_test, y_test = read_data('hw6_test.dat')
+
+
+def sgn(x):
+    if x > 0: return 1
+    return -1
+
+
+def forest_predict(forest, x):
+    return sgn(sum([tree.predict(x) for tree in forest]))
+
+
+def forest_err(forest, X, y):
+    return sum([1 for x, yy in zip(X, y) if forest_predict(forest, x) != yy]) / len(X)
+
+
+def bag(X, y, T):
+    Xy = list(zip(X, y))
+    for t in range(T):
+        yield zip(*[random.choice(Xy) for i in range(len(Xy))])
+
+
+def rf_thread(tid):
+    print(tid)
+    forest = list(map(lambda arg: DecisionTree(*arg), bag(X_train, y_train, 300)))
+    E_out = forest_err(forest, X_test, y_test)
+    for t in range(300):
+        if forest[t].err(X_test, y_test) < E_out:
+            print("===== Counterexample Found =====")
+            break
+    return E_out
+
+
 def main():
-    X_train, y_train = read_data('hw6_train.dat')
-    X_test, y_test = read_data('hw6_test.dat')
     tree = DecisionTree(X_train, y_train)
     print("%d branches" % tree.branch)
-    print("E_in = %f, E_out = %f" % (
-        sum([1 for x, yy in zip(X_train, y_train) if tree.predict(x) != yy]) / len(X_train),
-        sum([1 for x, yy in zip(X_test, y_test) if tree.predict(x) != yy]) / len(X_test),
-        ))
+    print("E_in = %f, E_out = %f" % (tree.err(X_train, y_train), tree.err(X_test, y_test)))
+    print("E_out(G_RF) = %f" % (sum(Pool(8).map(rf_thread, range(100))) / 100))
 
 
 if __name__ == '__main__': main()
