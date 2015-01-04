@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import sys
+import random
+from multiprocessing import Pool
+from collections import Counter
 from svmutil import *
 import numpy as np
 
@@ -47,7 +50,7 @@ def prob1617():
         print("sum of alpha = %f" % sum([abs(a[0]) for a in model.get_sv_coef()]))
 
 
-def prob1819():
+def prob18():
     X_train = [row[1:] for row in d_train]
     y_train = [1 if row[0] == 0.0 else 0 for row in d_train]
     X_test = [row[1:] for row in d_test]
@@ -55,8 +58,43 @@ def prob1819():
     for c in ['0.001', '0.01', '0.1', '1', '10']:
         model = svm_train(y_train, X_train, '-s 0 -h 0 -c %s -t 2 -g 100' % c)
         p_labels, p_acc, p_vals = svm_predict(y_test, X_test, model)
-        print("C = %s: margin = %f, E_out = %f%%"
+        print("C = %s: margin = %f, E_out = %f%%, sum xi = %f"
             % (c, get_margin(model, rbf_kernel), 100.0 - p_acc[0]))
+
+
+def prob19():
+    X_train = [row[1:] for row in d_train]
+    y_train = [1 if row[0] == 0.0 else 0 for row in d_train]
+    X_test = [row[1:] for row in d_test]
+    y_test = [1 if row[0] == 0.0 else 0 for row in d_test]
+    for g in ['1', '10', '100', '1000', '10000']:
+        model = svm_train(y_train, X_train, '-s 0 -h 0 -c 0.1 -t 2 -g %s' % g)
+        p_labels, p_acc, p_vals = svm_predict(y_test, X_test, model)
+        print("gamma = %s: E_out = %f%%" % (g, 100.0 - p_acc[0]))
+
+
+def prob20_thread(arg):
+    X_train = [row[1:] for row in d_train]
+    y_train = [1 if row[0] == 0.0 else 0 for row in d_train]
+    z = list(zip(X_train, y_train))
+    random.shuffle(z)
+    X_val, y_val = tuple(zip(*z[1000:]))
+    X_train, y_train = tuple(zip(*z[1000:]))
+
+    acc = 0.0
+    best_g = -1
+    for g in ['1', '10', '100', '1000', '10000']:
+        model = svm_train(y_train, X_train, '-s 0 -h 0 -c 0.1 -t 2 -g %s' % g)
+        p_labels, p_acc, p_vals = svm_predict(y_val, X_val, model)
+        if p_acc[0] > acc:
+            best_g = g
+            acc = p_acc[0]
+    return best_g
+
+
+def prob20():
+    pool = Pool(8)
+    print(Counter(pool.map(prob20_thread, range(100))))
 
 
 def main():
@@ -64,8 +102,9 @@ def main():
         '15': prob15,
         '16': prob1617,
         '17': prob1617,
-        '18': prob1819,
-        '19': prob1819,
+        '18': prob18,
+        '19': prob19,
+        '20': prob20,
     }
     try:
         fmap[sys.argv[1]]()
